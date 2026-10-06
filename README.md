@@ -15,12 +15,12 @@
 - **Mix and match different battery brands**: Marstek, Zendure, Anker Solix, Sessy, Hoymiles MQTT and more to come!
 - **Zero Export/Import PD Controller**: Keeps grid exchange near zero using a Proportional-Derivative algorithm.
 - **Integrated dashboard**: All the controls and adjustments from a single place. Graphs and power flow diagram included!
-- **One-Click PD Profiles + Quality Sensor**: Pick a tuning profile (Very smooth → Very aggressive) instead of tuning gains by hand; a control-quality sensor reports whether the result is stable, oscillating or sluggish.
+- **One-Click PD Profiles + Quality Sensor**: Pick a tuning profile (Very smooth → Very aggressive) instead of tuning gains by hand; a control-quality sensor reports whether the result is stable[...]
 - **Multi-Battery Support**: Manage up to 10 batteries with intelligent load sharing and SOC-based priority.
-- **Predictive Grid Charging**: Automatically charges from the grid when solar forecast + battery won't cover tomorrow's consumption. Supports fixed time slots, dynamic pricing, and real-time pricing modes. An optional grid-charge margin (%) tops up the grid amount to hedge optimistic solar forecasts.
-- **Negative-price opportunistic charging**: Optional Dynamic Pricing-only charging fills each battery to its configured maximum SOC during negative import-price slots, even without solar panels or a forecast energy deficit.
-- **Smart Pre-discharge / Anti-curtailment**: Optional Dynamic Pricing-only planning creates battery headroom before forecast PV surplus at negative-injection prices, then blocks discharge during the protected window while preserving SOC floors and safety ownership.
-- **Time Slots**: Per-battery windows with independent charge/discharge ticks, optional SOC and power overrides, and a manual mode that forces a fixed charge or discharge power. Up to 8 slots per integration.
+- **Predictive Grid Charging**: Automatically charges from the grid when solar forecast + battery won't cover tomorrow's consumption. Supports fixed time slots, dynamic pricing, and real-time pric[...]
+- **Negative-price opportunistic charging**: Optional Dynamic Pricing-only charging fills each battery to its configured maximum SOC during negative import-price slots, even without solar panels o[...]
+- **Smart Pre-discharge / Anti-curtailment**: Optional Dynamic Pricing-only planning creates battery headroom before forecast PV surplus at negative-injection prices, then blocks discharge during [...]
+- **Time Slots**: Per-battery windows with independent charge/discharge ticks, optional SOC and power overrides, and a manual mode that forces a fixed charge or discharge power. Up to 8 slots per [...]
 - **Weekly Full Charge**: Forces 100% SOC once a week for LFP cell balancing.
 - **Solar-Aware Charge Delay**: Holds back grid charging while solar can still cover the required energy.
 - **Peak Shaving**: Reserves battery capacity to cover demand spikes above a configurable power threshold, keeping energy in reserve rather than covering all consumption.
@@ -44,18 +44,35 @@
 If you find this integration useful, you can support my work:
 
 <a href="https://buymeacoffee.com/ffunes" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40" width="145" ></a>
+
 ## Documentation
 
 Full documentation (configuration, features, entities, troubleshooting) is available at:
 
 **[https://ffunes.github.io/Omnibattery/](https://ffunes.github.io/Omnibattery/)**
 
+### Quick Start: Predictive Charging
+
+Predictive charging buys grid energy only when needed to cover an actual energy deficit. It does not charge just because prices are cheap.
+
+**How it works:**
+
+1. System calculates: *"Is my battery + expected solar enough for tomorrow's consumption?"*
+2. If **yes**: No grid charging needed. System is at rest.
+3. If **no**: System identifies the energy shortfall and schedules grid charging during the cheapest available hours.
+
+**Key insight**: Cheap hours may overlap with strong solar production. They are only used if the energy deficit persists after accounting for solar and stored battery. If solar alone covers tomorrow's need, the cheap-hour slots remain unused (which is correct—no need to buy when solar is free).
+
+**Example**: Your grid prices are cheapest 11:00–16:00. If solar is forecast to provide 3 kWh during those hours, and your home only needs 2 kWh total, no grid charging is scheduled. But if you actually need 5 kWh and solar only provides 3 kWh, Omnibattery will buy the 2 kWh shortfall during the cheap window.
+
+**Multi-household considerations**: If your home has multiple occupants or devices (e.g., EV chargers), you can exclude them from battery coverage via **Load Exclusion**. Omnibattery then calculates the energy deficit for battery-covered consumption only, while the grid still handles the excluded loads directly.
+
 ## Requirements
 
 | Requirement | Details |
 |---|---|
 | Battery | Marstek Venus E v2/v3, Venus A, Venus D, Zendure SolarFlow 4000 Mix Pro / 4000 Mix AC+ / 3000 Mix AC+, 2400 AC+, 2400 AC Pro, Anker SOLIX Solarbank Max AC / 4 E5000 Pro |
-| Modbus bridge | Elfin-EW11 or compatible RS485-to-TCP converter. Venus E v3, Venus A and Venus D can also be connected via Ethernet with native Modbus TCP support. Anker Solarbank Max AC and 4 E5000 Pro use native Modbus TCP (enable in the Anker app under Third-Party Control; only one Modbus client at a time). |
+| Modbus bridge | Elfin-EW11 or compatible RS485-to-TCP converter. Venus E v3, Venus A and Venus D can also be connected via Ethernet with native Modbus TCP support. Anker Solarbank Max AC and 4 E[...]
 | Wireless connection | Required for Zendure SolarFlow 4000 Mix AC+, 3000 Mix AC+, 2400 AC+ and 2400 AC Pro |
 | Grid sensor | HA sensor measuring total grid consumption (e.g. Shelly EM3, Neurio, smart meter) |
 | Network | Battery reachable by IP from Home Assistant |
@@ -66,7 +83,7 @@ Full documentation (configuration, features, entities, troubleshooting) is avail
 
 **HACS (Recommended)**
 
-[![Open your Home Assistant instance and add a custom repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ffunes&repository=Omnibattery&category=integration)
+[![Open your Home Assistant instance and add a custom repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ff[...]
 
 Search for "Omnibattery", install, and restart Home Assistant.
 
@@ -76,10 +93,10 @@ Download the release zip, extract the `omnibattery` folder, copy it to your Home
 
 ### Upgrading from Marstek Venus Energy Manager
 
-Everything is preserved: all configuration (PD tuning, time slots, thresholds), entity IDs (`marstek_venus_*`), recorder history, long-term statistics, dashboards, automations, and daily energy counters.
+Everything is preserved: all configuration (PD tuning, time slots, thresholds), entity IDs (`marstek_venus_*`), recorder history, long-term statistics, dashboards, automations, and daily energy co[...]
 
 > [!IMPORTANT]
-> You must pass through **v2.0.6** of the old *Marstek Venus Energy Manager* integration before switching to Omnibattery. That release writes a configuration backup to HA's `.storage` that survives the domain switch. Skipping it means you may have to reconfigure everything from scratch if HACS deletes the old entries during the switch.
+> You must pass through **v2.0.6** of the old *Marstek Venus Energy Manager* integration before switching to Omnibattery. That release writes a configuration backup to HA's `.storage` that survive[...]
 
 > [!TIP]
 > Take a full Home Assistant backup before starting (**Settings → System → Backups → Create backup**).
@@ -111,13 +128,104 @@ Press **Ctrl+F5** so the renamed sidebar panel loads correctly.
 
 **Recovery: if you accidentally deleted the integration entirely**
 
-If the old config entries were deleted from *Settings → Devices & Services* before migrating, the backup written in Step 1 still survives. Go to **Add Integration → Omnibattery** — the flow will detect no live legacy entries but will find the backup and offer to restore it. Confirm to recreate everything from the backup.
+If the old config entries were deleted from *Settings → Devices & Services* before migrating, the backup written in Step 1 still survives. Go to **Add Integration → Omnibattery** — the flow[...]
 
 ---
 
 **Optional: rename system entities to `omnibattery_*`**
 
-After migration, system entities keep their old `marstek_venus_system_*` IDs. If you want to rename them, go to **Settings → Devices & Services → Omnibattery → ⋯ → Recreate entity IDs**. This renames them in-place with history preserved, but any automations, templates, or Energy dashboard entries that reference the old IDs must be updated manually.
+After migration, system entities keep their old `marstek_venus_system_*` IDs. If you want to rename them, go to **Settings → Devices & Services → Omnibattery → ⋯ → Recreate entity IDs**[...]
+
+### Troubleshooting Predictive Charging
+
+When predictive charging is not behaving as expected, inspect the `binary_sensor.omnibattery_predictive_charging_active` sensor and its attributes:
+
+**Primary decision attributes:**
+- `decision_reason` — explains why charging was or was not scheduled
+- `energy_deficit_kwh` — how much grid energy is needed (0 = sufficient)
+- `planned_grid_charge_kwh` — how much the system will attempt to buy
+- `charging_needed` — boolean: is grid charging required?
+
+**Energy availability:**
+- `usable_energy_kwh` — battery energy available above minimum SOC
+- `solar_forecast_kwh` or `solar_remaining_effective_kwh` — solar expected for the horizon
+- `remaining_consumption_kwh` — household consumption still expected
+- `total_available_kwh` — battery + solar combined
+
+**Pricing (Dynamic Pricing mode only):**
+- `price_data_status` — sensor status: `ok (N slots)`, `sensor_unavailable`, `no_slots`, `not_evaluated`
+- `max_price_threshold` — price ceiling for charging (if configured)
+- `current_price` — live price right now (if available)
+- `selected_hours` — the time slots the system chose for charging
+- `average_price` — average cost of selected slots
+- `estimated_cost` — total cost in currency
+
+**Typical troubleshooting flow:**
+
+1. **No grid charging planned, but I expected some:**
+   - Check `decision_reason` — if "Sufficient energy", battery + solar cover demand (correct behavior)
+   - Check `energy_deficit_kwh` — if 0, no additional charging is needed
+
+2. **Deficit exists, but charging doesn't start:**
+   - Check `price_data_status` — if `sensor_unavailable` or `no_slots`, the price sensor is not providing usable data
+   - Check `max_price_threshold` — if set, verify it is realistic for your market
+   - Check `current_price` — compare to the threshold; if price is above threshold, charging will not start
+
+3. **Price sensor shows data but `price_data_status: sensor_unavailable`:**
+   - Verify the sensor entity name matches what you configured in Omnibattery settings
+   - Reload the integration: **Settings → Devices & Services → Omnibattery → ⋯ → Reload**
+   - Check if the sensor has the required `data` attribute with at least one future time slot
+   - Verify future slots exist: use the template below to debug
+
+**Template to inspect price slots (Developer Tools → Template):**
+
+```jinja2
+{% set sensor = states.sensor.YOUR_PRICE_SENSOR %}
+{% set all_slots = sensor.attributes.get('data') or [] %}
+{% set now = now() %}
+{% set future = all_slots | selectattr('end_time', 'gt', now.isoformat()) | list %}
+
+Total slots: {{ all_slots | length }}
+Future slots: {{ future | length }}
+Now: {{ now.isoformat() }}
+
+First slot (if any):
+{% if all_slots %}
+  {{ all_slots[0] }}
+{% endif %}
+```
+
+**EPEX-format troubleshooting:**
+
+Some EPEX integrations (e.g., aWATTar) expose prices in **cents per kWh** (`price_ct_per_kwh: 35.183`) instead of EUR/kWh (`price_per_kwh: 0.35183`).
+
+If you see this mismatch:
+- Create a template sensor that converts cents to EUR by dividing by 100
+- Configure Omnibattery to use the template sensor instead of the raw integration sensor
+
+**Example template (in configuration.yaml):**
+
+```yaml
+template:
+  - sensor:
+      - name: "Omnibattery EPEX Price"
+        unique_id: omnibattery_epex_price
+        unit_of_measurement: "€/kWh"
+        attributes:
+          data: |
+            {%- set raw = state_attr('sensor.awattar_spot_price', 'data') or [] -%}
+            {%- set converted = [] -%}
+            {%- for entry in raw -%}
+              {%- set _ = converted.append({
+                'start_time': entry.start_time,
+                'end_time': entry.end_time,
+                'price_per_kwh': (entry.price_ct_per_kwh | float(0)) / 100.0
+              }) -%}
+            {%- endfor -%}
+            {{ converted }}
+```
+
+Then restart Home Assistant and reconfigure Omnibattery's price sensor to point to the new template sensor.
 
 ## Testbed Configuration
 
